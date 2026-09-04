@@ -1,0 +1,9 @@
+.venv/
+.venv-workers/
+node_modules/
+.wrangler/
+.dev.vars
+.env
+__pycache__/
+*.py[cod]
+.DS_Store
