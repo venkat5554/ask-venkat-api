@@ -465,20 +465,13 @@ async def chat(
 @app.post("/api/admin/ingest")
 async def ingest_knowledge(
     request: Request,
-    x_ingest_secret: str | None = Header(
-        default=None
-    ),
+    x_ingest_secret: str | None = Header(default=None),
 ):
-
     env = request.scope["env"]
 
-    configured_secret = get_secret(
-        env,
-        "INGEST_SECRET",
-    )
+    configured_secret = get_secret(env, "INGEST_SECRET")
 
     if not configured_secret:
-
         raise HTTPException(
             status_code=500,
             detail="INGEST_SECRET is not configured.",
@@ -488,55 +481,60 @@ async def ingest_knowledge(
         not x_ingest_secret
         or x_ingest_secret != configured_secret
     ):
-
         raise HTTPException(
             status_code=401,
             detail="Unauthorized.",
         )
 
     try:
+        batch_size = 8
+        total = 0
 
-        texts = [
-            chunk["text"]
-            for chunk in KNOWLEDGE_CHUNKS
-        ]
+        for start in range(0, len(KNOWLEDGE_CHUNKS), batch_size):
+            batch = KNOWLEDGE_CHUNKS[start:start + batch_size]
 
-        embeddings = await embed_texts(
-            env,
-            texts,
-        )
+            texts = [
+                chunk["text"]
+                for chunk in batch
+            ]
 
-        vectors = []
-
-        for chunk, embedding in zip(
-            KNOWLEDGE_CHUNKS,
-            embeddings,
-        ):
-
-            vectors.append(
-                {
-                    "id": chunk["id"],
-                    "values": embedding,
-                    "namespace": KNOWLEDGE_NAMESPACE,
-                    "metadata": {
-                        "section": chunk["section"],
-                        "text": chunk["text"],
-                    },
-                }
+            embeddings = await embed_texts(
+                env,
+                texts,
             )
 
-        await env.VECTORIZE.upsert(
-            to_js(vectors)
-        )
+            vectors = []
+
+            for chunk, embedding in zip(batch, embeddings):
+                vectors.append(
+                    {
+                        "id": chunk["id"],
+                        "values": embedding,
+                        "namespace": KNOWLEDGE_NAMESPACE,
+                        "metadata": {
+                            "section": chunk["section"],
+                            "text": chunk["text"],
+                        },
+                    }
+                )
+
+            await env.VECTORIZE.upsert(
+                to_js(vectors)
+            )
+
+            total += len(vectors)
+
+            print(
+                f"ingested_batch: "
+                f"{total}/{len(KNOWLEDGE_CHUNKS)}"
+            )
 
         return {
             "status": "accepted",
-            "vectors": len(vectors),
-            "namespace": KNOWLEDGE_NAMESPACE,
+            "vectors": total,
         }
 
     except Exception as exc:
-
         print(
             f"ingest_error: "
             f"{type(exc).__name__}: "
