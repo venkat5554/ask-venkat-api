@@ -257,7 +257,7 @@ async def retrieve_context(
         to_js(query_vector),
         to_js(
             {
-                "topK": 4,
+                "topK": 6,
                 "namespace": KNOWLEDGE_NAMESPACE,
                 "returnMetadata": "all",
                 "returnValues": False,
