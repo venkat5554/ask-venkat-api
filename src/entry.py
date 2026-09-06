@@ -233,22 +233,11 @@ async def retrieve_context(
     history: list[HistoryMessage],
 ) -> list[dict]:
 
-    recent_history = history[-6:]
-
-    history_text = "\n".join(
-        f"{item.role}: {item.content}"
-        for item in recent_history
-    )
-
-    retrieval_query = (
-        "This question is about Venkat's professional profile.\n\n"
-        f"Recent conversation:\n{history_text}\n\n"
-        f"Current question:\n{message}"
-    )
-
+    # For now, embed the user's actual question directly.
+    # This gives Vectorize the cleanest semantic query.
     query_embeddings = await embed_texts(
         env,
-        [retrieval_query],
+        [message],
     )
 
     query_vector = query_embeddings[0]
@@ -257,7 +246,7 @@ async def retrieve_context(
         to_js(query_vector),
         to_js(
             {
-                "topK": 6,
+                "topK": 8,
                 "namespace": KNOWLEDGE_NAMESPACE,
                 "returnMetadata": "all",
                 "returnValues": False,
@@ -268,14 +257,21 @@ async def retrieve_context(
     retrieved = []
 
     for match in result.matches:
-
         score = float(match.score)
-
-        if score < 0.25:
-            continue
-
         metadata = match.metadata
 
+        # Debug logging so we can see exactly what Vectorize found.
+        print(
+            "vector_match:",
+            str(getattr(match, "id", "unknown")),
+            score,
+            str(metadata.section),
+            str(metadata.text)[:160],
+        )
+
+        # IMPORTANT:
+        # Do not filter by score yet.
+        # First verify what scores your real data produces.
         retrieved.append(
             {
                 "score": score,
