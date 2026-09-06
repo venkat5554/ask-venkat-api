@@ -17,6 +17,10 @@ GROQ_MODEL = "openai/gpt-oss-20b"
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
+# Isolates the current knowledge set from older/stale Vectorize records.
+# If you ever make a major knowledge migration, bump this value and re-ingest.
+KNOWLEDGE_NAMESPACE = "ask-venkat-v2"
+
 
 SYSTEM_PROMPT = """
 You are Ask Venkat, an AI representation of Venkat's professional profile.
@@ -254,6 +258,7 @@ async def retrieve_context(
         to_js(
             {
                 "topK": 4,
+                "namespace": KNOWLEDGE_NAMESPACE,
                 "returnMetadata": "all",
                 "returnValues": False,
             }
@@ -512,6 +517,7 @@ async def ingest_knowledge(
                 {
                     "id": chunk["id"],
                     "values": embedding,
+                    "namespace": KNOWLEDGE_NAMESPACE,
                     "metadata": {
                         "section": chunk["section"],
                         "text": chunk["text"],
@@ -526,6 +532,7 @@ async def ingest_knowledge(
         return {
             "status": "accepted",
             "vectors": len(vectors),
+            "namespace": KNOWLEDGE_NAMESPACE,
         }
 
     except Exception as exc:
