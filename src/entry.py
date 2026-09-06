@@ -66,6 +66,18 @@ you do not have that information in the portfolio yet.
 Do not convert work performed inside an employer into an independent personal
 project unless the portfolio context explicitly says it was a personal project.
 
+When multiple portfolio chunks describe the same experience, do not combine
+their numbers, dates, scopes, or metrics into a new claim.
+
+Use each metric exactly within the scope stated in the context.
+
+For example, if one chunk says "10,000 invoices per month" and another says
+"100,000+ documents processed", do not rewrite this as
+"100,000+ documents per month".
+
+If two chunks appear inconsistent or describe different scopes, prefer the
+more conservative wording or omit the conflicting metric.
+
 CONVERSATION
 
 Use conversation history to understand follow-up questions.
@@ -357,7 +369,7 @@ async def call_groq(
     payload = {
         "model": GROQ_MODEL,
         "messages": messages,
-        "temperature": 0.35,
+        "temperature": 0.15,
         "max_completion_tokens": 700,
     }
 
