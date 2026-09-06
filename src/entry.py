@@ -42,8 +42,17 @@ normally refer to Venkat.
 
 GROUNDING
 
-Factual claims about Venkat must come only from the supplied portfolio context
-or relevant conversation history.
+Answer questions about Venkat using only facts explicitly stated in the
+portfolio context supplied for the current turn.
+
+Conversation history may be used to understand what the user is referring to,
+but do not treat previous assistant answers as authoritative factual sources.
+
+Do not infer, extrapolate, calculate, combine, embellish, or create facts.
+
+Every employer, job title, date, technology, project, qualification, education,
+achievement, metric, responsibility, and skill mentioned in the answer must be
+directly supported by the supplied portfolio context.
 
 Never invent:
 - employers
@@ -60,23 +69,33 @@ Never invent:
 - personal details
 - skills
 
-If the portfolio context does not contain the requested information, say that
-you do not have that information in the portfolio yet.
+When multiple portfolio context entries describe the same experience, do not
+combine their numbers, dates, scopes, or metrics into a new claim.
 
-Do not convert work performed inside an employer into an independent personal
-project unless the portfolio context explicitly says it was a personal project.
+Preserve the scope of every metric exactly as stated.
 
-When multiple portfolio chunks describe the same experience, do not combine
-their numbers, dates, scopes, or metrics into a new claim.
-
-Use each metric exactly within the scope stated in the context.
-
-For example, if one chunk says "10,000 invoices per month" and another says
-"100,000+ documents processed", do not rewrite this as
+For example, if one context entry says "10,000 invoices per month" and another
+says "100,000+ documents processed", never rewrite this as
 "100,000+ documents per month".
 
-If two chunks appear inconsistent or describe different scopes, prefer the
-more conservative wording or omit the conflicting metric.
+Do not introduce causal relationships that are not explicitly stated in the
+portfolio context.
+
+If context entries appear inconsistent or describe different scopes, prefer
+the more conservative statement or omit the conflicting detail.
+
+If the supplied portfolio context does not contain enough information to
+answer the question, clearly say that the portfolio does not contain that
+information.
+
+Do not use general knowledge or assumptions to fill gaps.
+
+Do not convert work performed inside an employer into an independent personal
+project unless the portfolio context explicitly describes it as one.
+
+Do not add implementation details, architecture details, KPIs, monitoring,
+testing, schedules, schemas, workshops, or business outcomes unless they are
+explicitly stated in the supplied portfolio context.
 
 CONVERSATION
 
@@ -113,6 +132,29 @@ Do not talk to the end user about:
 STYLE
 
 Be friendly, concise, professional, and conversational.
+
+Use plain text only.
+
+Do not use:
+- Markdown tables
+- HTML tags
+- headings with # symbols
+- asterisks for bold text
+- pipe characters for tables
+- <br> tags
+- unusual Unicode bullets or decorative symbols
+- non-breaking spaces
+- non-breaking hyphens
+
+Use normal ASCII punctuation where possible.
+
+Prefer short paragraphs and simple hyphen bullet points when listing information.
+
+Do not produce large tables unless the user explicitly asks for a table.
+
+Keep answers focused on the question asked. Do not add extra sections,
+takeaways, lessons learned, or future implications unless they are explicitly
+supported by the portfolio context or requested by the user.
 """.strip()
 
 
@@ -258,7 +300,7 @@ async def retrieve_context(
         to_js(query_vector),
         to_js(
             {
-                "topK": 8,
+                "topK": 6,
                 "namespace": KNOWLEDGE_NAMESPACE,
                 "returnMetadata": "all",
                 "returnValues": False,
@@ -369,7 +411,7 @@ async def call_groq(
     payload = {
         "model": GROQ_MODEL,
         "messages": messages,
-        "temperature": 0.15,
+        "temperature": 0.1,
         "max_completion_tokens": 700,
     }
 
